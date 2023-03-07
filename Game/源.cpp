@@ -168,7 +168,8 @@ void PrintHealh(struct Player PlayerData[], struct Monster MonsterData[], int nu
 
 	cout << PlayerData->PlayerName << " 等级" << PlayerData[0].PlayerLv << endl
 		<< "生命值: " << PlayerData[0].PlayerH << "/" << PlayerData[0].PlayerMaxH
-		<< "\t" << "耐力值:" << PlayerData[0].PlayerStamina << "/" << PlayerData[0].PlayerMaxSta << endl;
+		<< "\t" << "耐力值:" << PlayerData[0].PlayerStamina << "/" << PlayerData[0].PlayerMaxSta
+		<< "   玩家防御力: " << PlayerData[0].PlayerDef << endl;
 
 	for (int h = 0; h < PlayerData[0].PlayerMaxH - 1; h++)
 	{
@@ -191,8 +192,7 @@ void PrintHealh(struct Player PlayerData[], struct Monster MonsterData[], int nu
 	cout << "═╣" << endl;
 	//测试用代码             
 	cout << "玩家攻击力:" << PlayerData[0].PlayerAtk << " * " << PlayerData[0].DiceEf
-		<< " + " << PlayerData[0].ExDamage << endl
-		<< "玩家防御力: " << PlayerData[0].PlayerDef << endl;
+		<< " + " << PlayerData[0].ExDamage << endl;
 }
 
 void ShakeScM(struct Player PlayerData[], struct Monster MonsterData[], int num, int Da)
@@ -439,7 +439,7 @@ int ShowBattleBagItem(Player PlayerData[],Bag PlayerBag[], Item item[],Monster M
 				
 				system("pause");
 			}
-		if (PlayerBag[ItemSelect - 49].BagItem.ItemType == 4 && ItemSelect - 49 < BagItemNum)
+		else if (PlayerBag[ItemSelect - 49].BagItem.ItemType == 4 && ItemSelect - 49 < BagItemNum)
 		{
 			PlayerData[0].ExDamage += PlayerBag[ItemSelect - 49].BagItem.ItemUse;
 			PlayerData[0].Buff++;
@@ -1375,7 +1375,7 @@ void BattleSystem(Player PlayerData[], SkillList SkillData[], SkillUseList Skill
 	SkillUseList SkillSptUseData[], Monster MonsterData[], Bag PlayerBag[], Item item[], Equipment Eq[],PlayerEq PEq[]
 	,int MonNum, int len, int len2, int ItemNum, int BagEqNum)//战斗系统
 {
-	PlayerData[0].IfBattle = 0;
+	PlayerData[0].IfBattle = 1;
 	int FirstExDa = PlayerData[0].ExDamage;
 	int dth = 0;
 	int SK2Sel = 0;
@@ -1497,6 +1497,7 @@ void BattleSystem(Player PlayerData[], SkillList SkillData[], SkillUseList Skill
 					}
 					i++;
 				}
+
 				system("cls");
 			}
 				break;
