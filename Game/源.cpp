@@ -12,8 +12,8 @@ struct Player
 	int PlayerMaxH = 10;		//玩家最大血量
 	int PlayerExp = 0;		//玩家经验值
 	int PlayerLv = 1;		//玩家等级
-	int PlayerStamina = 15;	//玩家耐力
-	int PlayerMaxSta = 15;	//玩家最大耐力值
+	int PlayerStamina = 10;	//玩家耐力
+	int PlayerMaxSta = 10;	//玩家最大耐力值
 	int PlayerAtk = 2;		//玩家攻击力
 	int PlayerDef = 0;		//玩家防御力
 	int IfBattle = 0;		//玩家是否在战斗
@@ -50,6 +50,7 @@ struct Monster
 	int MonsterAtk;		//怪物基础攻击力
 	int MonsterSkill;	//怪物技能轴
 	int MonLv;			//怪物等级
+	int MonExp;			//掉落经验值
 };
 
 struct SkillList
@@ -62,13 +63,13 @@ struct SkillList
 	int SkillCDTime;			//冷却计时器
 	int SkillCost;
 	string SkillInfo;		//技能信息介绍
-	
+
 };
 
 struct SkillUseList
 {
 	string SkillName = "Unnamed";
-	double SkillUse = 0; 
+	double SkillUse = 0;
 	int SkillType = 0;
 	int SkillCD = 0;
 	int SkillCDTime = 0;
@@ -103,9 +104,42 @@ struct Bag
 	Equipment Eq;
 };
 
+void PlayerLvUp(Player PlayerData[])
+{
+	int a;
+	int b = PlayerData[0].PlayerLv;
+	if (PlayerData[0].PlayerLv < 6)
+	{
+		for (int i = 0; i < 5; i++)
+		{
+			if (PlayerData[0].PlayerExp >= (PlayerData[0].PlayerLv * (PlayerData[0].PlayerLv + 10) - 1))
+			{
+				a = PlayerData[0].PlayerExp - (PlayerData[0].PlayerLv * (PlayerData[0].PlayerLv + 10) - 1);
+				PlayerData[0].PlayerLv++;
+				PlayerData[0].PlayerExp = a;
+				PlayerData[0].PlayerMaxH += 2;
+				PlayerData[0].PlayerMaxSta += 4;
+				if (PlayerData[0].PlayerLv == 2 || PlayerData[0].PlayerLv == 4 || PlayerData[0].PlayerLv == 6)
+				{
+					PlayerData[0].PlayerAtk++;
+				}
+			}
+		}
+		if (PlayerData[0].PlayerLv > b)
+		{
+			cout << endl << "玩家等级提升!!!\n\n等级: " << PlayerData[0].PlayerLv << endl << endl
+				<< "最大生命值提升至 " << PlayerData[0].PlayerMaxH
+				<< "    最大耐力提升至 " << PlayerData[0].PlayerMaxSta
+				<< "    攻击力提升至 " << PlayerData[0].PlayerAtk << endl << endl;
+			system("pause");
+			system("cls");
+		}
+	}
+}
+
 void PrintHealh(struct Player PlayerData[], struct Monster MonsterData[], int num)  //打印血量和基础信息
 {
-	if (MonsterData[num].MonsterMaxH <= 20)
+	if (MonsterData[num].MonsterMaxH <= 50)
 	{
 		cout << MonsterData[num].MonsterName << endl
 			<< "生命值: " << MonsterData[num].MonsterH
@@ -134,11 +168,11 @@ void PrintHealh(struct Player PlayerData[], struct Monster MonsterData[], int nu
 	{
 		double MaxH = MonsterData[num].MonsterMaxH;
 		double H = MonsterData[num].MonsterH;
-		int PH = 20 * (H / MaxH);
+		int PH = 50 * (H / MaxH);
 		cout << MonsterData[num].MonsterName << endl
 			<< "生命值: " << MonsterData[num].MonsterH
 			<< "/" << MonsterData[num].MonsterMaxH << endl;
-		for (int b = 0; b < 19; b++)
+		for (int b = 0; b < 49; b++)
 		{
 			cout << "══";
 		}
@@ -147,12 +181,12 @@ void PrintHealh(struct Player PlayerData[], struct Monster MonsterData[], int nu
 		{
 			cout << "■";
 		}
-		for (int j = 0; j < 20 - PH; j++)
+		for (int j = 0; j < 50 - PH; j++)
 		{
 			cout << "□";
 		}
 		cout << " ╬" << endl;
-		for (int b = 0; b < 20; b++)
+		for (int b = 0; b < 50; b++)
 		{
 			cout << "══";
 		}
@@ -191,8 +225,8 @@ void PrintHealh(struct Player PlayerData[], struct Monster MonsterData[], int nu
 	}
 	cout << "═╣" << endl;
 	//测试用代码             
-	cout << "玩家攻击力:" << PlayerData[0].PlayerAtk << " * " << PlayerData[0].DiceEf
-		<< " + " << PlayerData[0].ExDamage << endl;
+	/*cout << "玩家攻击力:" << PlayerData[0].PlayerAtk << " * " << PlayerData[0].DiceEf
+		<< " + " << PlayerData[0].ExDamage << endl;*/
 }
 
 void ShakeScM(struct Player PlayerData[], struct Monster MonsterData[], int num, int Da)
@@ -206,7 +240,7 @@ void ShakeScM(struct Player PlayerData[], struct Monster MonsterData[], int num,
 		Sleep(380);
 		system("cls");
 		cout << "你的回合<<" << endl << endl;
-		if (MonsterData[num].MonsterMaxH <= 20)
+		if (MonsterData[num].MonsterMaxH <= 50)
 		{
 			cout << MonsterData[num].MonsterName << endl
 				<< "生命值: " << MonsterData[num].MonsterH
@@ -235,12 +269,12 @@ void ShakeScM(struct Player PlayerData[], struct Monster MonsterData[], int num,
 		{
 			int MaxH = MonsterData[num].MonsterMaxH;
 			int H = MonsterData[num].MonsterH;
-			int PH = 20 * (H + Da) / MaxH;
-			int PH2 = 20 - PH;
+			int PH = 50 * (H + Da) / MaxH;
+			int PH2 = 50 - PH;
 			cout << MonsterData[num].MonsterName << endl
 				<< "生命值: " << MonsterData[num].MonsterH
 				<< "/" << MonsterData[num].MonsterMaxH << endl;
-			for (int b = 0; b < 19; b++)
+			for (int b = 0; b < 49; b++)
 			{
 				cout << "══";
 			}
@@ -254,7 +288,7 @@ void ShakeScM(struct Player PlayerData[], struct Monster MonsterData[], int num,
 				cout << "□";
 			}
 			cout << " ╬" << endl;
-			for (int b = 0; b < 20; b++)
+			for (int b = 0; b < 50; b++)
 			{
 				cout << "══";
 			}
@@ -268,9 +302,10 @@ void ShakeScM(struct Player PlayerData[], struct Monster MonsterData[], int num,
 		cout << endl;
 		cout << endl;
 
-		cout << PlayerData->PlayerName << " 等级" << PlayerData[0].PlayerLv << endl
+		cout << PlayerData[0].PlayerName << " 等级" << PlayerData[0].PlayerLv << endl
 			<< "生命值: " << PlayerData[0].PlayerH << "/" << PlayerData[0].PlayerMaxH
-			<< "\t" << "耐力值:" << PlayerData[0].PlayerStamina << "/" << PlayerData[0].PlayerMaxSta << endl;
+			<< "\t" << "耐力值:" << PlayerData[0].PlayerStamina << "/" << PlayerData[0].PlayerMaxSta 
+			<< "   玩家防御力: " << PlayerData[0].PlayerDef << endl;
 		for (int h = 0; h < PlayerData[0].PlayerMaxH - 1; h++)
 		{
 			cout << "══";
@@ -1074,30 +1109,30 @@ void DiceEffect(int D,struct Player PlayerData[], Monster MonsterData[], int Mon
 	case 2:
 	{
 		system("cls");
-		PlayerData[0].PlayerH += 2; 
+		PlayerData[0].PlayerH += (PlayerData[0].PlayerMaxH / 10);
 		HealthConrtol(PlayerData, MonsterData);
 		cout << "你的回合<<" << endl << endl;
 		PrintHealh(PlayerData, MonsterData, MonNum);
 		cout << endl << "你投出了点数: " << D << endl<<endl;
-		cout << "回复了2点生命值 " << endl << endl;
+		cout << "回复了10%的生命值 " << endl << endl;
 		system("pause");
 	}
 		break;
 	case 3:
 	{
 		system("cls");
-		PlayerData[0].PlayerStamina += 5;
+		PlayerData[0].PlayerStamina += (PlayerData[0].PlayerMaxSta*3/10);
 		StaminaConrtol(PlayerData);
 		cout << "你的回合<<" << endl << endl;
 		PrintHealh(PlayerData, MonsterData, MonNum);
 		cout << endl << "你投出了点数: " << D << endl<<endl;
-		cout << "回复了5点耐力值 "<< endl << endl;
+		cout << "回复了30%的耐力值 "<< endl << endl;
 		system("pause");
 	}
 		break;
 	case 4:
 	{
-		PlayerData[0].ExDamage += (PlayerData[0].PlayerAtk*10/2)/10;
+		PlayerData[0].ExDamage += (PlayerData[0].PlayerAtk / 2);
 		system("cls");
 		cout << "你的回合<<" << endl << endl;
 		PrintHealh(PlayerData, MonsterData, MonNum);
@@ -1108,13 +1143,13 @@ void DiceEffect(int D,struct Player PlayerData[], Monster MonsterData[], int Mon
 		break;
 	case 5:
 	{
-		PlayerData[0].PlayerH += 5; 
+		PlayerData[0].PlayerH += (PlayerData[0].PlayerMaxH / 5);
 		HealthConrtol(PlayerData, MonsterData);
 		system("cls");
 		cout << "你的回合<<" << endl << endl;
 		PrintHealh(PlayerData, MonsterData, MonNum);
 		cout << endl << "你投出了点数: " << D << endl<<endl;
-		cout << "回复了5点生命值 "<< endl<<endl;
+		cout << "回复了20%的生命值 "<< endl<<endl;
 		system("pause");
 	}
 		break;
@@ -1125,7 +1160,7 @@ void DiceEffect(int D,struct Player PlayerData[], Monster MonsterData[], int Mon
 		cout << "你的回合<<" << endl << endl;
 		PrintHealh(PlayerData, MonsterData, MonNum);
 		cout << endl << "你投出了点数: " << D << endl;
-		cout << "玩家的攻击力提升100%\n持续一回合，不可叠加" << endl << endl;
+		cout << "玩家的基础攻击力提升100%\n持续一回合，不可叠加" << endl << endl;
 		system("pause");
 	}
 		break;
@@ -1572,8 +1607,13 @@ void BattleSystem(Player PlayerData[], SkillList SkillData[], SkillUseList Skill
 		}
 		else if (dth == 1 || dth == 2)
 		{
-			cout << endl << "战斗结束" << endl << endl;
+			PlayerData[0].PlayerExp += MonsterData[MonNum].MonExp;
+			cout << "\n获得了 " << MonsterData[MonNum].MonExp << " 点经验值" << endl;
 			PlayerData[0].IfBattle = 0;
+			Sleep(1350);
+			system("cls");
+			PlayerLvUp(PlayerData);
+			cout << endl << "战斗结束" << endl << endl;
 			system("pause");
 			system("cls");
 			break;
@@ -1591,27 +1631,27 @@ int main()
 	srand((unsigned int)time(NULL));
 	struct Player PlayerData[1];
 	struct PlayerEq PEq[1];
-									//怪物名字、怪物血量、怪物最大血量、怪物基础攻击力、怪物技能轴、怪物等级
-	struct Monster MonsterData[] = { {"测试怪物",20,20,1,0,0},
-									{"怪物A",10,10,1,0,0} }; 
+									//怪物名字、怪物血量、怪物最大血量、怪物基础攻击力、怪物技能轴、怪物等级、掉落经验值
+	struct Monster MonsterData[] = { {"测试怪物",80,80,1,0,0,1},
+									{"怪物A",10,10,1,0,0,1} }; 
 
 	              //分别为是否显示技能、技能名字、技能伤害计算数值、技能类型、技能CD、CDTime、技能消耗、技能介绍
 	struct SkillList SkillData[] = { {1,"光剑劈砍★☆☆",1,1,0,0,1,"造成基础攻击100%伤害"},
 									 {1,"MK2自卫手枪★☆☆",3,0,3,0,4,"基础攻击力+3"},
-									 {1,"热能爆破★☆☆",2,1,3,1,3,"造成基础攻击200%的伤害"}
+									 {1,"热能爆破★☆☆",2,1,6,1,7,"造成基础攻击200%的伤害"}
 								    };
 	int len = sizeof SkillData / sizeof SkillData[0];
 	struct SkillUseList SkillUseData[20];
 
 				 //分别为是否显示技能、技能名字、技能伤害计算数值、技能类型、技能CD、CDTime、技能消耗、技能介绍
-	struct SkillList SkillSptData[] = { {1,"招架★☆☆",2,3,4,3,5,"防御，使受到的伤害降低2点"},
+	struct SkillList SkillSptData[] = { {1,"招架★☆☆",2,3,4,2,5,"防御，使受到的伤害降低2点"},
 										{1,"紧急包扎★☆☆",3,2,7,4,6,"回复玩家3点生命值"} 
 									   };
 	int len2 = sizeof SkillSptData / sizeof SkillSptData[0];
 	struct SkillUseList SkillSptUseData[20];
 
 	//是否显示装备、装备名字、是否已装备、装备类型、装备类型名称、装备数值、装备介绍
-	struct Equipment Eq[] = { {1,"剑",0,0,"武器",10,"No Info"},
+	struct Equipment Eq[] = { {1,"剑",0,0,"武器",5,"No Info"},
 							  {1,"安全帽",0,1,"头盔",10,"No Info"},
 							  {1,"防弹衣",0,2,"胸甲",10,"No Info"},
 							  {1,"护腿",0,3,"护腿",10,"No Info"},
@@ -1632,29 +1672,26 @@ int main()
 
 	//初始化玩家数据
 	{
-	PlayerData[0].PlayerExp = 0;
-	PlayerData[0].PlayerLv = 6;
+	PlayerData[0].PlayerExp = 199;
+	PlayerData[0].PlayerLv = 1;
 	PlayerData[0].PlayerMaxH = 10;
 	PlayerData[0].PlayerH = 10;
-	PlayerData[0].PlayerAtk = 3;
+	PlayerData[0].PlayerAtk = 2;
 	PlayerData[0].PlayerName = "Player";
-	PlayerData[0].DiceNum = 30;
-	PlayerData[0].PlayerMaxSta = 15;
-	PlayerData[0].PlayerStamina = 15;
+	PlayerData[0].DiceNum = 10;
+	PlayerData[0].PlayerMaxSta = 10;
+	PlayerData[0].PlayerStamina = 10;
 	PlayerData[0].DiceEf = 1;
 	PlayerData[0].ExDamage = 0;
 	PlayerData[0].PlayerDef = 0; 
 	}
 
-
+	PlayerLvUp(PlayerData);
 
 
 	//统计物品装备数量
 	int BagEqNum = NumOfEq(PlayerBag, Eq, len3);
 	int BagItemNum = NumOfItem(PlayerBag, item, len4);
-	cout << "装备数量: " << BagEqNum << endl;
-	cout << "物品数量: " << BagItemNum << endl;
-	system("pause");
 
 	//往玩家背包写入物品装备
 	CinBagEq(PlayerBag, Eq,BagEqNum);
@@ -1665,13 +1702,6 @@ int main()
 	int MonNum = 0;
 	BattleSystem(PlayerData, SkillData, SkillUseData, SkillSptData, SkillSptUseData, MonsterData,
 		PlayerBag,item,Eq,PEq,MonNum, len ,len2, BagItemNum, BagEqNum);
-
-	system("cls");
-
-	ShowBag(PlayerBag, BagItemNum, BagEqNum);
-
-
-
 
 
 	cout << "Game End" << endl;
