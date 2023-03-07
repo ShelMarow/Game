@@ -614,6 +614,135 @@ void ShowBag(Bag PlayerBag[], int BagItemNum,int BagEqNum)
 	}
 }
 
+void SelectEq(Player PlayerData[], Bag PlayerBag[], PlayerEq PEq[], Equipment Eq[], int BagEqNum)
+{
+	system("cls");
+	cout << endl << "\t\t  |-选择要调整的装备-|\n" << endl;
+	cout		  << "\t\t  |----------------|\n\n"
+			      << "\t\t   |输入其他键退出|" << endl;
+	ShowBagEq(PlayerBag, BagEqNum);
+	int EqSelect = _getch();
+	if (EqSelect > 48 && EqSelect < BagEqNum + 49)
+	{
+		if (PlayerBag[EqSelect - 49].Eq.IfEq == 1)
+		{
+			if (PlayerBag[EqSelect - 49].Eq.EqType == 0)
+			{
+				PEq[0].hand = 0;
+				PEq[0].handS = "空";
+				PlayerData[0].PlayerAtk -= PlayerBag[EqSelect - 49].Eq.EqUse;
+			}
+			else if (PlayerBag[EqSelect - 49].Eq.EqType == 1)
+			{
+				PEq[0].head = 0;
+				PEq[0].headS = "空";
+				PlayerData[0].PlayerMaxH -= (PlayerBag[EqSelect - 49].Eq.EqUse / 3) + 1;
+				PlayerData[0].PlayerMaxSta -= PlayerBag[EqSelect - 49].Eq.EqUse;
+			}
+			else if (PlayerBag[EqSelect - 49].Eq.EqType == 2)
+			{
+				PEq[0].cheast = 0;
+				PEq[0].cheastS = "空";
+				PlayerData[0].PlayerMaxH -= PlayerBag[EqSelect - 49].Eq.EqUse;
+				PlayerData[0].PlayerMaxSta -= PlayerBag[EqSelect - 49].Eq.EqUse;
+			}
+			else if (PlayerBag[EqSelect - 49].Eq.EqType == 3)
+			{
+				PEq[0].legging = 0;
+				PEq[0].leggingS = "空";
+				PlayerData[0].PlayerMaxH -= (PlayerBag[EqSelect - 49].Eq.EqUse / 2) + 1;
+				PlayerData[0].PlayerMaxSta -= PlayerBag[EqSelect - 49].Eq.EqUse;
+
+			}
+			else if (PlayerBag[EqSelect - 49].Eq.EqType == 4)
+			{
+				PEq[0].boot = 0;
+				PEq[0].bootS = "空";
+				PlayerData[0].PlayerMaxH -= (PlayerBag[EqSelect - 49].Eq.EqUse / 3) + 1;
+				PlayerData[0].PlayerMaxSta -= PlayerBag[EqSelect - 49].Eq.EqUse;
+			}
+			else if (PlayerBag[EqSelect - 49].Eq.EqType == 5)
+			{
+				PEq[0].other = 0;
+				PEq[0].otherS = "空";
+				if (PEq[0].other == 0 && PlayerBag[EqSelect - 49].Eq.EqUse == 0)
+				{
+					PlayerData[0].IfFirstDead--;
+				}
+			}
+			PlayerBag[EqSelect - 49].Eq.IfEq = 0;
+			system("cls");
+			ShowBagEq(PlayerBag, BagEqNum);
+			cout << "已卸下装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
+		}
+		else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0)
+		{
+			if ((PEq[0].hand == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 0) || (PEq[0].head == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 1) ||
+				(PEq[0].cheast == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 2) || (PEq[0].legging == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 3) ||
+				(PEq[0].boot == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 4) || (PEq[0].other == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 5))
+			{
+				system("cls");
+				ShowBagEq(PlayerBag, BagEqNum);
+				cout << "当前位置已有装备，请先卸下装备！\n\n";
+			}
+
+			else if ((PEq[0].hand == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 0) ||(PEq[0].head == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 1) ||
+					(PEq[0].cheast == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 2) ||(PEq[0].legging == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 3) ||
+					(PEq[0].boot == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 4) ||(PEq[0].other == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 5))
+			{
+				system("cls");
+				PlayerBag[EqSelect - 49].Eq.IfEq = 1;
+				if (PlayerBag[EqSelect - 49].Eq.EqType == 0)
+				{
+					PEq[0].hand = 1;
+					PEq[0].handS = PlayerBag[EqSelect - 49].Eq.EqName;
+					PlayerData[0].PlayerAtk += PlayerBag[EqSelect - 49].Eq.EqUse;
+				}
+				if (PlayerBag[EqSelect - 49].Eq.EqType == 1)
+				{
+					PEq[0].head = 1;
+					PEq[0].headS = PlayerBag[EqSelect - 49].Eq.EqName;
+					PlayerData[0].PlayerMaxH += (PlayerBag[EqSelect - 49].Eq.EqUse / 3) + 1;
+					PlayerData[0].PlayerMaxSta += PlayerBag[EqSelect - 49].Eq.EqUse;
+				}
+				if (PlayerBag[EqSelect - 49].Eq.EqType == 2)
+				{
+					PEq[0].cheast = 1;
+					PEq[0].cheastS = PlayerBag[EqSelect - 49].Eq.EqName;
+					PlayerData[0].PlayerMaxH += PlayerBag[EqSelect - 49].Eq.EqUse;
+					PlayerData[0].PlayerMaxSta += PlayerBag[EqSelect - 49].Eq.EqUse;
+				}
+				if (PlayerBag[EqSelect - 49].Eq.EqType == 3)
+				{
+					PEq[0].legging = 1;
+					PEq[0].leggingS = PlayerBag[EqSelect - 49].Eq.EqName;
+					PlayerData[0].PlayerMaxH += (PlayerBag[EqSelect - 49].Eq.EqUse / 2) + 1;
+					PlayerData[0].PlayerMaxSta += PlayerBag[EqSelect - 49].Eq.EqUse;
+				}
+				if (PlayerBag[EqSelect - 49].Eq.EqType == 4)
+				{
+					PEq[0].boot = 1;
+					PEq[0].bootS = PlayerBag[EqSelect - 49].Eq.EqName;
+					PlayerData[0].PlayerMaxH += (PlayerBag[EqSelect - 49].Eq.EqUse / 3) + 1;
+					PlayerData[0].PlayerMaxSta += PlayerBag[EqSelect - 49].Eq.EqUse;
+				}
+				if (PlayerBag[EqSelect - 49].Eq.EqType == 5)
+				{
+					PEq[0].other = 1;
+					PEq[0].otherS = PlayerBag[EqSelect - 49].Eq.EqName;
+					if (PEq[0].other == 1 && PlayerBag[EqSelect - 49].Eq.EqUse == 0)
+					{
+						PlayerData[0].IfFirstDead++;
+					}
+				}
+			}
+			ShowBagEq(PlayerBag, BagEqNum);
+			cout << "已装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
+		}
+		system("pause");
+	}
+}
+
 void ShowPlayerData(Player PlayerData[], Bag PlayerBag[], Equipment Eq[], PlayerEq PEq[],int BagEqNum)
 {
 	system("cls");
@@ -621,7 +750,7 @@ void ShowPlayerData(Player PlayerData[], Bag PlayerBag[], Equipment Eq[], Player
 	int i = 1;
 	while (1)
 	{
-		system("cls");
+		{system("cls");
 		cout << endl << "\t\t\t\t\t       |玩家信息|" << endl
 			<< "\t\t\t\t\t       |--------|" << endl << endl;
 		cout << "\t\t\t\t       |--按“I”键进入装备模式--|" << endl;
@@ -632,7 +761,7 @@ void ShowPlayerData(Player PlayerData[], Bag PlayerBag[], Equipment Eq[], Player
 		cout << "|胸甲: " << PEq[0].cheastS << endl << "|------------------|"
 			<< "\t|饰品: " << PEq[0].otherS << endl << "\t\t\t|------------------|\n";
 		cout << "|腿部: " << PEq[0].leggingS << endl << "|------------------|\n" << endl;
-		cout << "|靴子: " << PEq[0].bootS << endl << "|------------------|\n" << endl;
+		cout << "|靴子: " << PEq[0].bootS << endl << "|------------------|\n" << endl; }
 
 		//玩家属性输出
 		{
@@ -676,348 +805,16 @@ void ShowPlayerData(Player PlayerData[], Bag PlayerBag[], Equipment Eq[], Player
 
 		char EqMode;
 		EqMode = _getch();
-		if (EqMode == 105 && PlayerData[0].IfBattle == 0)
-		{
-			system("cls");
-			cout << endl << "\t\t   |-选择调整装备的位置-|" << endl;
-			cout		 << "\t\t   |--------------------|\n"
-						 << "\t\t   |---输入其他键退出---|" << endl << endl;
-			cout <<  ">>1-武器 || 2-头部 || 3-胸甲 || 4-腿部 || 5-靴子 || 6-饰品<<\n";
-			int EqSelect;
-			EqSelect = _getch();
-			switch (EqSelect)
-			{
-			case 49:
-			{
-				system("cls");
-				cout << endl << "\t\t  |-选择要调整的装备-|\n" << endl;
-				cout		 << "\t\t  |-------武器-------|\n\n"
-							 << "\t\t   |-输入其他键退出-|" << endl;
-				ShowBagEq(PlayerBag, BagEqNum);
-				EqSelect = _getch();
-				if (EqSelect > 48 && EqSelect < BagEqNum + 49)
-				{
-					if (PlayerBag[EqSelect - 49].Eq.IfEq == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 0 && PEq[0].hand == 1)
-					{
-						PlayerBag[EqSelect - 49].Eq.IfEq = 0;
-						PEq[0].hand = 0;
-						PEq[0].handS = "空";
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已卸下装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 0 && PEq[0].hand == 1)
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置已有装备，请先卸下装备！\n\n";
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 0 && PEq[0].hand == 0)
-					{
-						system("cls");
-						PlayerBag[EqSelect - 49].Eq.IfEq = 1;
-						PEq[0].hand = 1;
-						PEq[0].handS = PlayerBag[EqSelect - 49].Eq.EqName;
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置不可装备该物品!\n\n";
-						break;
-					}
-					if (PEq[0].hand == 1)
-					{
-						PlayerData[0].PlayerAtk += PlayerBag[EqSelect - 49].Eq.EqUse;
-					}
-					else if (PEq[0].hand == 0)
-					{
-						PlayerData[0].PlayerAtk -= PlayerBag[EqSelect - 49].Eq.EqUse;
-					}
-					system("pause");
-				}
-			}
-			break;
-			case 50:
-			{
-				system("cls");
-				cout << endl << "\t\t  |-选择要调整的装备-|\n" << endl;
-				cout << "\t\t  |-------头部-------|\n\n"
-					<< "\t\t   |-输入其他键退出-|" << endl;
-				ShowBagEq(PlayerBag, BagEqNum);
-				EqSelect = _getch();
-				if (EqSelect > 48 && EqSelect < BagEqNum + 49)
-				{
-					if (PlayerBag[EqSelect - 49].Eq.IfEq == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 1 && PEq[0].head == 1)
-				{
-					PlayerBag[EqSelect - 49].Eq.IfEq = 0;
-					PEq[0].head = 0;
-					PEq[0].headS = "空";
-					system("cls");
-					ShowBagEq(PlayerBag, BagEqNum);
-					cout << "已卸下装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-				}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 1 && PEq[0].head == 1)
-				{
-					system("cls");
-					ShowBagEq(PlayerBag, BagEqNum);
-					cout << "当前位置已有装备，请先卸下装备！\n\n";
-				}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 1 && PEq[0].head == 0)
-				{
-					system("cls");
-					PlayerBag[EqSelect - 49].Eq.IfEq = 1;
-					PEq[0].head = 1;
-					PEq[0].headS = PlayerBag[EqSelect - 49].Eq.EqName;
-					ShowBagEq(PlayerBag, BagEqNum);
-					cout << "已装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-				}
-					else
-				{
-					system("cls");
-					ShowBagEq(PlayerBag, BagEqNum);
-					cout << "当前位置不可装备该物品!\n\n";
-					break;
-				}
-					if (PEq[0].head == 1)
-				{
-					PlayerData[0].PlayerMaxH += (PlayerBag[EqSelect - 49].Eq.EqUse / 3) + 1;
-					PlayerData[0].PlayerMaxSta += PlayerBag[EqSelect - 49].Eq.EqUse;
-				}
-					else if (PEq[0].head == 0)
-				{
-					PlayerData[0].PlayerMaxH -= (PlayerBag[EqSelect - 49].Eq.EqUse / 3) + 1;
-					PlayerData[0].PlayerMaxSta -= PlayerBag[EqSelect - 49].Eq.EqUse;
-				}
-					system("pause");
-				}
-			}
-			break;
-			case 51:
-			{
-				system("cls");
-				cout << endl << "\t\t  |-选择要调整的装备-|\n" << endl;
-				cout << "\t\t  |-------胸甲-------|\n\n"
-					<< "\t\t   |-输入其他键退出-|" << endl;
-				ShowBagEq(PlayerBag, BagEqNum);
-				EqSelect = _getch();
-				if (EqSelect > 48 && EqSelect < BagEqNum + 49)
-				{
-					if (PlayerBag[EqSelect - 49].Eq.IfEq == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 2 && PEq[0].cheast == 1)
-					{
-						PlayerBag[EqSelect - 49].Eq.IfEq = 0;
-						PEq[0].cheast = 0;
-						PEq[0].cheastS = "空";
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已卸下装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 2 && PEq[0].cheast == 1)
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置已有装备，请先卸下装备！\n\n";
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 2 && PEq[0].cheast == 0)
-					{
-						system("cls");
-						PlayerBag[EqSelect - 49].Eq.IfEq = 1;
-						PEq[0].cheast = 1;
-						PEq[0].cheastS = PlayerBag[EqSelect - 49].Eq.EqName;
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置不可装备该物品!\n\n";
-						break;
-					}
-					if (PEq[0].cheast == 1)
-					{
-						PlayerData[0].PlayerMaxH += PlayerBag[EqSelect - 49].Eq.EqUse;
-						PlayerData[0].PlayerMaxSta += PlayerBag[EqSelect - 49].Eq.EqUse;
-					}
-					else if (PEq[0].cheast == 0)
-					{
-						PlayerData[0].PlayerMaxH -= PlayerBag[EqSelect - 49].Eq.EqUse;
-						PlayerData[0].PlayerMaxSta -= PlayerBag[EqSelect - 49].Eq.EqUse;
-					}
-					system("pause");
-				}
-			}
-			break;
-			case 52:
-			{
-				cout << endl << "\t\t  |-选择要调整的装备-|\n" << endl;
-				cout << "\t\t  |-------腿部-------|\n\n"
-					<< "\t\t   |-输入其他键退出-|" << endl;
-				ShowBagEq(PlayerBag, BagEqNum);
-				EqSelect = _getch();
-				if (EqSelect > 48 && EqSelect < BagEqNum + 49)
-				{
-					if (PlayerBag[EqSelect - 49].Eq.IfEq == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 3 && PEq[0].legging == 1)
-					{
-						PlayerBag[EqSelect - 49].Eq.IfEq = 0;
-						PEq[0].legging = 0;
-						PEq[0].leggingS = "空";
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已卸下装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 3 && PEq[0].legging == 1)
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置已有装备，请先卸下装备！\n\n";
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 3 && PEq[0].legging == 0)
-					{
-						system("cls");
-						PlayerBag[EqSelect - 49].Eq.IfEq = 1;
-						PEq[0].legging = 1;
-						PEq[0].leggingS = PlayerBag[EqSelect - 49].Eq.EqName;
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置不可装备该物品!\n\n";
-						break;
-					}
-					if (PEq[0].legging == 1)
-					{
-						PlayerData[0].PlayerMaxH += (PlayerBag[EqSelect - 49].Eq.EqUse / 2) + 1;
-						PlayerData[0].PlayerMaxSta += PlayerBag[EqSelect - 49].Eq.EqUse;
-					}
-					else if (PEq[0].legging == 0)
-					{
-						PlayerData[0].PlayerMaxH -= (PlayerBag[EqSelect - 49].Eq.EqUse / 2) + 1;
-						PlayerData[0].PlayerMaxSta -= PlayerBag[EqSelect - 49].Eq.EqUse;
-					}
-					system("pause");
-				}
-			}
-			break;
-			case 53:
-			{
-				system("cls");
-				cout << endl << "\t\t  |-选择要调整的装备-|\n" << endl;
-				cout		 << "\t\t  |-------靴子-------|\n\n"
-					<< "\t\t   |-输入其他键退出-|" << endl;
-				ShowBagEq(PlayerBag, BagEqNum);
-				EqSelect = _getch();
-				if (EqSelect > 48 && EqSelect < BagEqNum + 49)
-				{
-					if (PlayerBag[EqSelect - 49].Eq.IfEq == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 4 && PEq[0].boot == 1)
-					{
-						PlayerBag[EqSelect - 49].Eq.IfEq = 0;
-						PEq[0].boot = 0;
-						PEq[0].bootS = "空";
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已卸下装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 4 && PEq[0].boot == 1)
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置已有装备，请先卸下装备！\n\n";
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 4 && PEq[0].boot == 0)
-					{
-						system("cls");
-						PlayerBag[EqSelect - 49].Eq.IfEq = 1;
-						PEq[0].boot = 1;
-						PEq[0].bootS = PlayerBag[EqSelect - 49].Eq.EqName;
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置不可装备该物品!\n\n";
-						break;
-					}
-					if (PEq[0].boot == 1)
-					{
-						PlayerData[0].PlayerMaxH += (PlayerBag[EqSelect - 49].Eq.EqUse / 3) + 1;
-						PlayerData[0].PlayerMaxSta += PlayerBag[EqSelect - 49].Eq.EqUse;
-					}
-					else if (PEq[0].boot == 0)
-					{
-						PlayerData[0].PlayerMaxH -= (PlayerBag[EqSelect - 49].Eq.EqUse / 3) + 1;
-						PlayerData[0].PlayerMaxSta -= PlayerBag[EqSelect - 49].Eq.EqUse;
-					}
-					system("pause");
-				}
-			}
-			break;
-			case 54:
-			{
-				system("cls");
-				cout << endl << "\t\t  |-选择要调整的装备-|\n" << endl;
-				cout		 << "\t\t  |-------护符-------|\n\n"
-					<< "\t\t   |-输入其他键退出-|" << endl;
-				ShowBagEq(PlayerBag, BagEqNum);
-				EqSelect = _getch();
-				if (EqSelect > 48 && EqSelect < BagEqNum + 49)
-				{
-					if (PlayerBag[EqSelect - 49].Eq.IfEq == 1 && PlayerBag[EqSelect - 49].Eq.EqType == 5 && PEq[0].other == 1)
-					{
-						PlayerBag[EqSelect - 49].Eq.IfEq = 0;
-						PEq[0].other = 0;
-						PEq[0].otherS = "空";
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已卸下装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 5 && PEq[0].other == 1)
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置已有装备，请先卸下装备！\n\n";
-					}
-					else if (PlayerBag[EqSelect - 49].Eq.IfEq == 0 && PlayerBag[EqSelect - 49].Eq.EqType == 5 && PEq[0].other == 0)
-					{
-						system("cls");
-						PlayerBag[EqSelect - 49].Eq.IfEq = 1;
-						PEq[0].other = 1;
-						PEq[0].otherS = PlayerBag[EqSelect - 49].Eq.EqName;
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "已装备 " << PlayerBag[EqSelect - 49].Eq.EqName << endl << endl;
-						if (PlayerBag[EqSelect - 49].Eq.EqUse == 0)
-						{
-							PlayerData[0].IfFirstDead = 1;
-						}
-					}
-					else
-					{
-						system("cls");
-						ShowBagEq(PlayerBag, BagEqNum);
-						cout << "当前位置不可装备该物品!\n\n";
-						break;
-					}
-					system("pause");
-				}
-			}
-			break;
-			default:
-				break;
-			}
-		}
-		else if(EqMode == 105 && PlayerData[0].IfBattle == 1)
+		if(EqMode == 105 && PlayerData[0].IfBattle == 1)
 		{
 			system("cls");
 			cout <<endl<< "\t战斗中无法切换装备！" << endl << endl;
 			system("pause");
 			break;
+		}
+		else if (EqMode == 105 && PlayerData[0].IfBattle == 0)
+		{
+			SelectEq(PlayerData, PlayerBag, PEq, Eq, BagEqNum);
 		}
 		else
 		{
