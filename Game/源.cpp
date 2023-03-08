@@ -8,6 +8,8 @@ using namespace std;
 struct Player
 {
 	string PlayerName = "Player";	//玩家名字
+	int gold = 0;			//货币
+	int SkillPoint = 0;		//技能点
 	int PlayerH = 10;		//玩家血量
 	int PlayerMaxH = 10;		//玩家最大血量
 	int PlayerExp = 0;		//玩家经验值
@@ -64,6 +66,8 @@ struct SkillList
 	int SkillCD;
 	int SkillCDTime;			//冷却计时器
 	int SkillCost;
+	int SkillLv;
+	int SkillPC;				//技能升级消耗
 	string SkillInfo;		//技能信息介绍
 
 };
@@ -76,6 +80,9 @@ struct SkillUseList
 	int SkillCD = 0;
 	int SkillCDTime = 0;
 	int SkillCost = 0;
+	int ShowSkill = 0;
+	int SkillLv = 0;
+	int SkillPC;
 	string SkillInfo = "No Info";
 };
 
@@ -97,6 +104,7 @@ struct Item
 	int ItemNum = 0;
 	int ItemType = 0;			//物品类型:0为不可消耗的道具、1为血量消耗类物品、2为耐力消耗类物品、3为护甲消耗类物品、4为伤害消耗类物品
 	int ItemUse = 0;
+	int cost = 0;				//价格
 	string ItemInfo = "No Info";
 };
 
@@ -227,8 +235,8 @@ void PrintHealh(struct Player PlayerData[], struct Monster MonsterData[], int nu
 	}
 	cout << "═╣" << endl;
 	/*测试用代码  */           
-	cout << "玩家攻击力:" << PlayerData[0].PlayerAtk << " * " << PlayerData[0].DiceEf
-		<< " + " << PlayerData[0].ExDamage << endl;
+	/*cout << "玩家攻击力:" << PlayerData[0].PlayerAtk << " * " << PlayerData[0].DiceEf
+		<< " + " << PlayerData[0].ExDamage << endl;*/
 }
 
 void ShakeScM(struct Player PlayerData[], struct Monster MonsterData[], int num, int Da)
@@ -375,16 +383,17 @@ void gotoxy(int x, int y)
 	SetConsoleCursorPosition(hOut, pos);
 }
 
-int NumOfItem(Bag PlayerBag[], Item item[], int len4)		//统计展示的物品数量
+int NumOfItem(Bag PlayerBag[], Item item[], int len4,int BagItemNum)		//统计展示的物品数量
 {
-	int BagItemNum = 0;
+	int ShowItemNum = 0;
 	for (int i = 0; i < len4; i++)					
 	{
-		if (item[i].ShowItem == 1 && item[i].ItemNum > 0)
+		if (item[i].ShowItem == 1)
 		{
-			BagItemNum++;
+			ShowItemNum++;
 		}
 	}
+	BagItemNum += ShowItemNum;
 	return BagItemNum;
 }
 
@@ -401,21 +410,31 @@ int NumOfEq(Bag PlayerBag[], Equipment Eq[], int len3)		//统计展示的装备�
 	return EqNum;
 }
 
-void CinBagItem(Bag PlayerBag[], Item item[],int BagItemNum)	//将物品写入背包
+void CinBagItem(Bag PlayerBag[], Item item[],int BagItemNum,int len4)	//将物品写入背包
 {
-	int bag = 0;
-	for (int i = 0; bag < BagItemNum; i++)					//将展示值为1的物品写入背包
+	int PBItemNum = 0;
+	for (int i = 0; i < BagItemNum; i++)
 	{
-		if(item[i].ShowItem == 1 && item[i].ItemNum > 0)
+		if (PlayerBag[i].BagItem.ShowItem == 1)
 		{
-			PlayerBag[bag].BagItem.ItemName = item[i].ItemName;
-			PlayerBag[bag].BagItem.ItemType = item[i].ItemType;
-			PlayerBag[bag].BagItem.ItemNum = item[i].ItemNum;
-			PlayerBag[bag].BagItem.ItemUse = item[i].ItemUse;
-			PlayerBag[bag].BagItem.ItemInfo = item[i].ItemInfo;
+			PBItemNum++;
+		}
+	}
+	int j = 0;
+	for (int i = 0; i < len4; i++)					//将展示值为1的物品写入背包
+	{
+		if (item[i].ShowItem == 1)
+		{
+			PlayerBag[PBItemNum + j].BagItem.ItemName = item[i].ItemName;
+			PlayerBag[PBItemNum + j].BagItem.ItemType = item[i].ItemType;
+			PlayerBag[PBItemNum + j].BagItem.ItemNum = item[i].ItemNum;
+			PlayerBag[PBItemNum + j].BagItem.ItemUse = item[i].ItemUse;
+			PlayerBag[PBItemNum + j].BagItem.ItemInfo = item[i].ItemInfo;
+			PlayerBag[PBItemNum + j].BagItem.ShowItem = item[i].ShowItem;
+			PlayerBag[PBItemNum + j].BagItem.cost = item[i].cost;
 			item[i].ItemNum = 0;
 			item[i].ShowItem = 0;
-			bag++;
+			j++;
 		}
 	}
 }
@@ -432,7 +451,7 @@ int ShowBattleBagItem(Player PlayerData[],Bag PlayerBag[], Item item[],Monster M
 			cout << "\t  类型: "<<((PlayerBag[j].BagItem.ItemType == 0) ? "道具":"消耗品" )<< "    "
 					 <<"剩余: " << PlayerBag[j].BagItem.ItemNum << endl;
 			cout << " |--------------------------------------------------|" << endl
-			<<" |INFO: " << PlayerBag[j].BagItem.ItemInfo << endl << endl; 
+				<< " |INFO: " << PlayerBag[j].BagItem.ItemInfo << endl << endl << endl;
 		}
 
 		int ItemSelect;
@@ -763,79 +782,393 @@ void SelectEq(Player PlayerData[], Bag PlayerBag[], PlayerEq PEq[], Equipment Eq
 	}
 }
 
-void ShowPlayerData(Player PlayerData[], Bag PlayerBag[], Equipment Eq[], PlayerEq PEq[],int BagEqNum)
+int CinSkillUse(SkillList SkillData[], SkillUseList SkillUseData[], int len)   //写入使用表
+{
+	int Sk1Num = 0;
+	for (int j = 0; j < len; j++)
+	{
+		if (SkillData[j].ShowSkill == 1)
+		{
+			SkillUseData[Sk1Num].SkillName = SkillData[j].SkillName;
+			SkillUseData[Sk1Num].SkillType = SkillData[j].SkillType;
+			SkillUseData[Sk1Num].SkillCost = SkillData[j].SkillCost;
+			SkillUseData[Sk1Num].SkillCD = SkillData[j].SkillCD;
+			SkillUseData[Sk1Num].SkillCDTime = SkillData[j].SkillCDTime;
+			SkillUseData[Sk1Num].SkillUse = SkillData[j].SkillUse;
+			SkillUseData[Sk1Num].SkillInfo = SkillData[j].SkillInfo;
+			SkillUseData[Sk1Num].ShowSkill = SkillData[j].ShowSkill;
+			Sk1Num++;
+		}
+	}
+	return Sk1Num;
+}
+
+int CinSkillSptUse(SkillList SkillSptData[], SkillUseList SkillSptUseData[], int len2)  //写入使用表
+{
+	int Sk2Num = 0;
+	for (int j = 0; j < len2; j++)
+	{
+		if (SkillSptData[j].ShowSkill == 1)
+		{
+			SkillSptUseData[Sk2Num].SkillName = SkillSptData[j].SkillName;
+			SkillSptUseData[Sk2Num].SkillType = SkillSptData[j].SkillType;
+			SkillSptUseData[Sk2Num].SkillCost = SkillSptData[j].SkillCost;
+			SkillSptUseData[Sk2Num].SkillCD = SkillSptData[j].SkillCD;
+			SkillSptUseData[Sk2Num].SkillCDTime = SkillSptData[j].SkillCDTime;
+			SkillSptUseData[Sk2Num].SkillUse = SkillSptData[j].SkillUse;
+			SkillSptUseData[Sk2Num].SkillInfo = SkillSptData[j].SkillInfo;
+			SkillSptUseData[Sk2Num].ShowSkill = 1;
+			Sk2Num++;
+		}
+	}
+	return Sk2Num;
+}
+
+void SkillLv(Player PlayerData[], SkillList SkillData[], SkillList SkillSptData[],
+	SkillUseList SkillLvUp[], SkillUseList SkillUseData[], SkillUseList SkillSptUseData[], int len, int len2)
+{
+	while (1)
+	{
+		system("cls");
+		cout << endl << "\t\t\t\t\t        |玩家信息|" << endl
+			<< "\t\t\t\t\t        |--------|" << endl << endl;
+		cout << "\t        |--按“Y”键进入查看技能界面--|";
+		cout << "\t           |--按“U”键进入升级技能界面--|" << endl;
+		int Mode;
+		Mode = _getch();
+		system("cls");
+		if (Mode == 117)
+		{
+			while (1)
+			{
+				cout << "\n\t\t\t\t\t>>请选择要升级的技能类型<<\n\n\t\t\t\t  1.战斗技能\t2.支援技能\t0.退出界面\n";
+				int SkS = _getch();
+				SkS -= 48;
+				system("cls");
+				if (SkS == 1)
+				{
+					while (1)
+					{
+						int a = 0;
+						int b = 1;
+						cout << "\n███████████████████████████████████████████████████████████████████████████████████"
+							<< endl << endl;
+						for (int i = 1; i < len; i++)
+						{
+							if (SkillData[i - 1].ShowSkill == 1 && SkillData[i].SkillLv <= 3 && SkillData[i].SkillLv > SkillData[i - 1].SkillLv)
+							{
+								cout << " |战斗技能 " << b << ": <" << SkillData[i - 1].SkillName << "> ";
+								cout << "   \t| 消耗: " << SkillData[i - 1].SkillCost
+									<< " | CD: " << SkillData[i - 1].SkillCDTime << "/"
+									<< SkillData[i - 1].SkillCD << " |" << endl;
+								cout << " |------------------------------------------------------------|" << endl
+									<< " |INFO: " << SkillData[i - 1].SkillInfo << endl;
+								SkillLvUp[a].SkillName = SkillData[i - 1].SkillName;
+								SkillLvUp[a].ShowSkill = SkillData[i - 1].ShowSkill;
+								a++;
+
+
+								cout << "\t\t\t\t\t\t\t\t   升级至\n\n" << "\t\t\t\t\t\t\t\t↓↓↓↓↓↓\n\n";
+
+
+
+								cout << " |战斗技能 " << b << ": <" << SkillData[i].SkillName << "> ";
+								cout << "   \t| 消耗: " << SkillData[i].SkillCost
+									<< " | CD: " << SkillData[i].SkillCDTime << "/"
+									<< SkillData[i].SkillCD << " | \t  花费: " << SkillData[i].SkillPC << endl;
+								cout << " |------------------------------------------------------------|" << endl
+									<< " |INFO: " << SkillData[i].SkillInfo
+									<< endl << endl
+									<< "███████████████████████████████████████████████████████████████████████████████████"
+									<< endl << endl;
+								SkillLvUp[a].SkillName = SkillData[i].SkillName;
+								SkillLvUp[a].ShowSkill = SkillData[i].ShowSkill;
+								a++;
+								b++;
+							}
+						}
+						if (a > 0)
+						{
+							cout << "输入要升级的技能(输入0退出)" << "\t\t玩家技能点数: " << PlayerData[0].SkillPoint << endl;
+							int Select = _getch();
+							Select -= 49;
+
+							if (Select == -1)
+							{
+								system("cls");
+								break;
+							}
+							Select *= 2;
+
+							for (int k = 0; k <= len; k++)
+							{
+								if (SkillLvUp[Select].SkillName == SkillData[k].SkillName)
+								{
+									if (SkillData[k + 1].SkillPC <= PlayerData[0].SkillPoint)
+									{
+										PlayerData[0].SkillPoint -= SkillData[k + 1].SkillPC;
+										SkillLvUp[Select].ShowSkill = 0;
+										SkillData[k].ShowSkill = SkillLvUp[Select].ShowSkill;
+										SkillLvUp[Select + 1].ShowSkill = 1;
+										SkillData[k + 1].ShowSkill = SkillLvUp[Select + 1].ShowSkill;
+										a -= 2;
+										CinSkillUse(SkillData, SkillUseData, len);
+										cout << "\n技能升级完毕！\n" << endl;
+									}
+									else
+									{
+										cout << "\n技能点数不够！\n" << endl;
+									}
+									system("pause");
+								}
+							}
+							system("cls");
+						}
+						else
+						{
+							cout << "所有技能均已升级完毕\n\n\n" << endl;
+							system("pause");
+							system("cls");
+							break;
+						}
+
+					}
+				}
+				else if (SkS == 2)
+				{
+					while (1)
+					{
+						int a = 0;
+						int b = 1;
+						cout << "\n███████████████████████████████████████████████████████████████████████████████████"
+							<< endl << endl;
+						for (int i = 1; i < len2; i++)
+						{
+							if (SkillSptData[i - 1].ShowSkill == 1 && SkillSptData[i].SkillLv <= 3 && SkillSptData[i].SkillLv > SkillSptData[i - 1].SkillLv)
+							{
+								cout << " |战斗技能 " << b << ": <" << SkillSptData[i - 1].SkillName << "> ";
+								cout << "   \t| 消耗: " << SkillSptData[i - 1].SkillCost
+									<< " | CD: " << SkillSptData[i - 1].SkillCDTime << "/"
+									<< SkillSptData[i - 1].SkillCD << " |" << endl;
+								cout << " |------------------------------------------------------------|" << endl
+									<< " |INFO: " << SkillSptData[i - 1].SkillInfo << endl;
+								SkillLvUp[a].SkillName = SkillSptData[i - 1].SkillName;
+								SkillLvUp[a].ShowSkill = SkillSptData[i - 1].ShowSkill;
+								a++;
+
+
+								cout << "\t\t\t\t\t\t\t\t   升级至\n\n" << "\t\t\t\t\t\t\t\t↓↓↓↓↓↓\n\n";
+
+
+
+								cout << " |战斗技能 " << b << ": <" << SkillSptData[i].SkillName << "> ";
+								cout << "   \t| 消耗: " << SkillSptData[i].SkillCost
+									<< " | CD: " << SkillSptData[i].SkillCDTime << "/"
+									<< SkillSptData[i].SkillCD << " | \t  花费: " << SkillSptData[i].SkillPC << endl;
+								cout << " |------------------------------------------------------------|" << endl
+									<< " |INFO: " << SkillSptData[i].SkillInfo
+									<< endl << endl
+									<< "███████████████████████████████████████████████████████████████████████████████████"
+									<< endl << endl;
+								SkillLvUp[a].SkillName = SkillSptData[i].SkillName;
+								SkillLvUp[a].ShowSkill = SkillSptData[i].ShowSkill;
+								a++;
+								b++;
+							}
+						}
+						if (a > 0)
+						{
+							cout << "输入要升级的技能(输入0退出)" << "\t\t玩家技能点数: " << PlayerData[0].SkillPoint << endl;
+							int Select = _getch();
+							Select -= 49;
+
+							if (Select == -1)
+							{
+								system("cls");
+								break;
+							}
+							Select *= 2;
+
+							for (int k = 0; k <= len2; k++)
+							{
+								if (SkillLvUp[Select].SkillName == SkillSptData[k].SkillName)
+								{
+									if (SkillSptData[k + 1].SkillPC <= PlayerData[0].SkillPoint)
+									{
+										PlayerData[0].SkillPoint -= SkillSptData[k + 1].SkillPC;
+										SkillLvUp[Select].ShowSkill = 0;
+										SkillSptData[k].ShowSkill = SkillLvUp[Select].ShowSkill;
+										SkillLvUp[Select + 1].ShowSkill = 1;
+										SkillSptData[k + 1].ShowSkill = SkillLvUp[Select + 1].ShowSkill;
+										a -= 2;
+										CinSkillSptUse(SkillSptData, SkillSptUseData, len2);
+										cout << "\n技能升级完毕！\n" << endl;
+									}
+									else
+									{
+										cout << "\n技能点数不够！\n" << endl;
+									}
+									system("pause");
+								}
+							}
+							system("cls");
+						}
+						else
+						{
+							cout << "所有技能均已升级完毕\n\n\n" << endl;
+							system("pause");
+							system("cls");
+							break;
+						}
+
+					}
+				}
+				else
+				{
+					system("cls");
+					break;
+				}
+			}
+		}
+		else if (Mode == 121)
+		{
+			while (1)
+			{
+				cout << endl << "                            |输入任意键返回上个界面|" << endl
+					<< "                            |----------------------|" << endl << endl;
+				for (int i = 0; i < len; i++)
+				{
+					if (SkillUseData[i].ShowSkill == 1)
+					{
+						cout << endl
+							<< " |战斗技能 " << i + 1 << ": <" << SkillUseData[i].SkillName << "> ";
+						cout << "   \t| 消耗: " << SkillUseData[i].SkillCost
+							<< " | CD: " << SkillUseData[i].SkillCDTime << "/"
+							<< SkillUseData[i].SkillCD << " |    " << endl;
+						cout << " |------------------------------------------------------------|" << endl
+							<< " |INFO: " << SkillUseData[i].SkillInfo << endl << endl;
+					}
+				}
+				cout << "\n███████████████████████████████████████████████████████████████████████████████████" << endl;
+				cout << endl << " |特殊技能 1：命运骰子（剩余" << PlayerData->DiceNum << "个）" << endl
+					<< " |------------------------------------------------------------|" << endl
+					<< " |INFO: 投出一个骰子，会有特殊的效果" << endl << endl;
+				for (int i = 0; i < len2; i++)
+				{
+					if (SkillSptUseData[i].ShowSkill == 1)
+					{
+						cout << endl
+							<< " |支援技能 " << i + 2 << ": <" << SkillSptUseData[i].SkillName << ">";
+						cout << "\t   | 消耗: " << SkillSptUseData[i].SkillCost
+							<< " | CD: " << SkillSptUseData[i].SkillCDTime << "/"
+							<< SkillSptUseData[i].SkillCD << " |    " << endl
+							<< " |------------------------------------------------------------|" << endl
+							<< " |INFO: " << SkillSptUseData[i].SkillInfo << endl << endl;
+					}
+				}
+				system("pause");
+				break;
+			}
+		}
+		else
+		{
+			break;
+		}
+		system("cls");
+	}
+
+}
+
+void ShowPlayerData(Player PlayerData[], Bag PlayerBag[], Equipment Eq[], PlayerEq PEq[], SkillList SkillData[], SkillList SkillSptData[],
+	SkillUseList SkillLvUp[], SkillUseList SkillUseData[], SkillUseList SkillSptUseData[], int len, int len2, int BagEqNum)
 {
 	system("cls");
 	int y = 6;
 	int i = 1;
 	while (1)
 	{
-		{system("cls");
+		system("cls");
 		cout << endl << "\t\t\t\t\t       |玩家信息|" << endl
-			<< "\t\t\t\t\t       |--------|" << endl << endl;
-		cout << "\t\t\t\t       |--按“I”键进入装备模式--|" << endl;
-		cout << "                 |装备信息|" << endl
+			<< "\t\t\t\t\t       |--------|" << endl<<endl;
+		cout << "\t\t\t    |按“I”键进入装备模式|"<< "  |按“U”键进入技能界面|" << endl;
+		cout << "\n                 |装备信息|" << endl
 			<< "                 |--------|" << endl << endl;
 		cout << "|头部: " << PEq[0].headS << endl << "|------------------|"
 			<< "\t|武器: " << PEq[0].handS << endl << "\t\t\t|------------------|\n";
 		cout << "|胸甲: " << PEq[0].cheastS << endl << "|------------------|"
 			<< "\t|饰品: " << PEq[0].otherS << endl << "\t\t\t|------------------|\n";
 		cout << "|腿部: " << PEq[0].leggingS << endl << "|------------------|\n" << endl;
-		cout << "|靴子: " << PEq[0].bootS << endl << "|------------------|\n" << endl; }
+		cout << "|靴子: " << PEq[0].bootS << endl << "|------------------|\n" << endl;
 
 		//玩家属性输出
 		{
-			gotoxy(60, 5);
-			cout << "                 |玩家属性|";
-			gotoxy(60, 6);
-			cout << "                 |--------|";
-			gotoxy(60, 8);
-			cout << "|玩家: " << PlayerData[0].PlayerName;
-			gotoxy(60, 9);
-			cout << "|------------------|";
-			gotoxy(84, 8);
-			cout << "|等级: " << PlayerData[0].PlayerLv;
-			gotoxy(84, 9);
-			cout << "|------------------|";
-			gotoxy(60, 11);
-			cout << "|生命值: " << PlayerData[0].PlayerH << "/" << PlayerData[0].PlayerMaxH;
-			gotoxy(60, 12);
-			cout << "|------------------|";
-			gotoxy(84, 11);
-			cout << "|经验值: " << PlayerData[0].PlayerExp << "/" << PlayerData[0].PlayerLv * (PlayerData[0].PlayerLv + 10) - 1;
-			gotoxy(84, 12);
-			cout << "|------------------|";
-			gotoxy(60, 14);
-			cout << "|攻击力: " << PlayerData[0].PlayerAtk;
-			gotoxy(60, 15);
-			cout << "|------------------|";
-			gotoxy(84, 14);
-			cout << "|命运骰子: " << PlayerData[0].DiceNum << " 个";
-			gotoxy(84, 15);
-			cout << "|------------------|";
-			gotoxy(60, 17);
-			cout << "|耐力: " << PlayerData[0].PlayerStamina << "/" << PlayerData[0].PlayerMaxSta;
-			gotoxy(60, 18);
-			cout << "|------------------|";
-			gotoxy(84, 17);
-			cout << "|耐力回复: " << (PlayerData[0].PlayerLv  / 2) + 1;
-			gotoxy(84, 18);
-			cout << "|------------------|";
-		}
-
-		char EqMode;
+		gotoxy(66, 6);
+		cout << "           |玩家属性|";
+		gotoxy(66, 7);
+		cout << "           |--------|";
+		gotoxy(60, 9);
+		cout << "|玩家: " << PlayerData[0].PlayerName;
+		gotoxy(60, 10);
+		cout << "|------------------|";
+		gotoxy(84, 9);
+		cout << "|等级: " << PlayerData[0].PlayerLv;
+		gotoxy(84, 10);
+		cout << "|------------------|";
+		gotoxy(60, 12);
+		cout << "|生命值: " << PlayerData[0].PlayerH << "/" << PlayerData[0].PlayerMaxH;
+		gotoxy(60, 13);
+		cout << "|------------------|";
+		gotoxy(84, 12);
+		cout << "|经验值: " << PlayerData[0].PlayerExp << "/" << PlayerData[0].PlayerLv * (PlayerData[0].PlayerLv + 10) - 1;
+		gotoxy(84, 13);
+		cout << "|------------------|";
+		gotoxy(60, 15);
+		cout << "|攻击力: " << PlayerData[0].PlayerAtk;
+		gotoxy(60, 16);
+		cout << "|------------------|";
+		gotoxy(84, 15);
+		cout << "|命运骰子: " << PlayerData[0].DiceNum << " 个";
+		gotoxy(84, 16);
+		cout << "|------------------|";
+		gotoxy(60, 18);
+		cout << "|耐力: " << PlayerData[0].PlayerStamina << "/" << PlayerData[0].PlayerMaxSta;
+		gotoxy(60, 19);
+		cout << "|------------------|";
+		gotoxy(84, 18);
+		cout << "|耐力回复: " << (PlayerData[0].PlayerLv / 2) + 1;
+		gotoxy(84, 19);
+		cout << "|------------------|";
+	}
+	
+		int EqMode;
 		EqMode = _getch();
-		if(EqMode == 105 && PlayerData[0].IfBattle == 1)
+		if (EqMode == 117 && PlayerData[0].IfBattle == 1)
 		{
 			system("cls");
-			cout <<endl<< "\t战斗中无法切换装备！" << endl << endl;
+			cout << endl << "\t战斗中无法进入该界面！" << endl << endl;
 			system("pause");
 			break;
 		}
-		else if (EqMode == 105 && PlayerData[0].IfBattle == 0)
+		else if(EqMode == 117 && PlayerData[0].IfBattle == 0)
 		{
-			SelectEq(PlayerData, PlayerBag, PEq, Eq, BagEqNum);
+			SkillLv(PlayerData, SkillData, SkillSptData, SkillUseData, SkillLvUp, SkillSptUseData, len, len2);
 		}
+		else
+		{
+			system("cls");
+			break;
+		}
+		if (EqMode == 105 && PlayerData[0].IfBattle == 1)
+	{
+		system("cls");
+		cout << endl << "\t战斗中无法切换装备！" << endl << endl;
+		system("pause");
+		break;
+	}
+		else if (EqMode == 105 && PlayerData[0].IfBattle == 0)
+	{
+		SelectEq(PlayerData, PlayerBag, PEq, Eq, BagEqNum);
+	}
 		else
 		{
 			system("cls");
@@ -1000,46 +1333,6 @@ void DiceEffect(int D,struct Player PlayerData[], Monster MonsterData[], int Mon
 	}
 }
 
-int CinSkillUse(SkillList SkillData[], SkillUseList SkillUseData[], int len)   //写入使用表
-{
-	int Sk1Num = 0;
-	for (int j = 0; j < len; j++)
-	{
-		if (SkillData[j].ShowSkill == 1)
-		{
-			SkillUseData[Sk1Num].SkillName = SkillData[j].SkillName;
-			SkillUseData[Sk1Num].SkillType = SkillData[j].SkillType;
-			SkillUseData[Sk1Num].SkillCost = SkillData[j].SkillCost;
-			SkillUseData[Sk1Num].SkillCD = SkillData[j].SkillCD;
-			SkillUseData[Sk1Num].SkillCDTime = SkillData[j].SkillCDTime;
-			SkillUseData[Sk1Num].SkillUse = SkillData[j].SkillUse;
-			SkillUseData[Sk1Num].SkillInfo = SkillData[j].SkillInfo;
-			Sk1Num++;
-		}
-	}
-	return Sk1Num;
-}
-
-int CinSkillSptUse(SkillList SkillSptData[], SkillUseList SkillSptUseData[], int len2)  //写入使用表
-{
-	int Sk2Num = 0;
-	for (int j = 0; j < len2; j++)
-	{
-		if (SkillSptData[j].ShowSkill == 1)
-		{
-			SkillSptUseData[Sk2Num].SkillName = SkillSptData[j].SkillName;
-			SkillSptUseData[Sk2Num].SkillType = SkillSptData[j].SkillType;
-			SkillSptUseData[Sk2Num].SkillCost = SkillSptData[j].SkillCost;
-			SkillSptUseData[Sk2Num].SkillCD = SkillSptData[j].SkillCD;
-			SkillSptUseData[Sk2Num].SkillCDTime = SkillSptData[j].SkillCDTime;
-			SkillSptUseData[Sk2Num].SkillUse = SkillSptData[j].SkillUse;
-			SkillSptUseData[Sk2Num].SkillInfo = SkillSptData[j].SkillInfo;
-			Sk2Num++;
-		}
-	}
-	return Sk2Num;
-}
-
 int SkillSptSystem			
 (SkillList SkillSptData[], SkillUseList SkillSptUseData[], Player PlayerData[],
 	Monster MonsterData[], int MonNum, int len2, int Sk2Num,int FirstExDa)//支援技能系统
@@ -1067,9 +1360,9 @@ int SkillSptSystem
 			<< " |INFO: " << SkillSptUseData[i].SkillInfo << endl << endl;
 	}
 	int ef = 0;
-	char select;
+	int select;
 	select = _getch();
-	
+
 	if (select == 49)
 	{
 		select = Dice(PlayerData);
@@ -1085,11 +1378,11 @@ int SkillSptSystem
 		system("cls");
 		return 0;
 	}
-	else if(select > 49 && select <= Sk2Num + 49 )
+	if(select > 49 && select <= Sk2Num + 49)
 	{
 		if (SkillSptUseData[select - 50].SkillCDTime == 0)
 		{
-			if (PlayerData[0].PlayerStamina >= SkillSptUseData[select - 2].SkillCost)
+			if (PlayerData[0].PlayerStamina >= SkillSptUseData[select - 50].SkillCost)
 			{
 				SkillSptUseData[select - 50].SkillCDTime = SkillSptUseData[select - 50].SkillCD + 1;
 
@@ -1113,7 +1406,7 @@ int SkillSptSystem
 					system("cls");
 					return 0;
 				}
-				else if (SkillSptUseData[select - 50].SkillType == 3)
+				if (SkillSptUseData[select - 50].SkillType == 3)
 				{
 					system("cls");
 
@@ -1133,17 +1426,19 @@ int SkillSptSystem
 					system("cls");
 					return 0;
 				}
-				else if (SkillSptUseData[select - 50].SkillType == 4)
+				if (SkillSptUseData[select - 50].SkillType == 4)
 				{
 					system("cls");
 
 					(ef == 1) ? ef-- : 0;
 
+					PlayerData[0].PlayerStamina -= SkillSptUseData[select - 50].SkillCost;
 					PlayerData[0].PlayerStamina += SkillSptUseData[select - 50].SkillUse;
 					StaminaConrtol(PlayerData);
 
 					cout << "你的回合<<" << endl << endl;
 					PrintHealh(PlayerData, MonsterData, MonNum);
+
 					cout << endl << PlayerData[0].PlayerName
 						<< " 使用了 " << SkillSptUseData[select - 50].SkillName
 						<< " 回复了 " << SkillSptUseData[select - 50].SkillUse << " 点耐力值" << endl << endl;
@@ -1152,7 +1447,7 @@ int SkillSptSystem
 					system("cls");
 					return 0;
 				}
-				else if (SkillSptUseData[select - 50].SkillType == 5)
+				if (SkillSptUseData[select - 50].SkillType == 5)
 				{
 					system("cls");
 
@@ -1184,13 +1479,10 @@ int SkillSptSystem
 					cout << endl << PlayerData[0].PlayerName
 						<< " 使用了 " << SkillSptUseData[select - 50].SkillName
 						<< " 对敌人造成了 " << dataken << " 点伤害" << endl << endl;
+
 					system("pause");
 					system("cls");
 					return 3;
-				}
-				else
-				{
-					return -1;
 				}
 			}
 			else if (PlayerData[0].PlayerStamina < SkillSptUseData[select - 50].SkillCost)
@@ -1292,7 +1584,7 @@ int SkillSystem(SkillList SkillData[], SkillUseList SkillUseData[],
 }
 
 void BattleSystem(Player PlayerData[], SkillList SkillData[], SkillUseList SkillUseData[], SkillList SkillSptData[],
-	SkillUseList SkillSptUseData[], Monster MonsterData[], Bag PlayerBag[], Item item[], Equipment Eq[],PlayerEq PEq[]
+	SkillUseList SkillSptUseData[],SkillUseList SkillLvUp[], Monster MonsterData[], Bag PlayerBag[], Item item[], Equipment Eq[], PlayerEq PEq[]
 	,int MonNum, int len, int len2, int ItemNum, int BagEqNum)//战斗系统
 {
 	PlayerData[0].IfBattle = 1;
@@ -1440,17 +1732,21 @@ void BattleSystem(Player PlayerData[], SkillList SkillData[], SkillUseList Skill
 				break;
 			case 52:
 			{
-				ShowPlayerData(PlayerData,PlayerBag, Eq, PEq,BagEqNum);
+				ShowPlayerData(PlayerData, PlayerBag, Eq, PEq, SkillData, SkillSptData, SkillUseData, SkillSptUseData, SkillLvUp, len, len2, BagEqNum);
 				system("cls");
 			}
 				break;
 			case 53:
 			{
-				for (int j = 0; j < len; j++)
+				for (int j = 0; j < len + len2; j++)
 				{
 					if (SkillUseData[j].SkillCDTime > 0)
 					{
 						SkillUseData[j].SkillCDTime--;
+					}
+					if (SkillSptUseData[j].SkillCDTime > 0)
+					{
+						SkillSptUseData[j].SkillCDTime--;
 					}
 				}
 				cout << endl <<"已跳过回合" << endl << endl;
@@ -1583,9 +1879,89 @@ void BattleSystem(Player PlayerData[], SkillList SkillData[], SkillUseList Skill
 	}
 }
 
-void Shop()
+int Shop(Player PlayerData[],Bag PlayerBag[],Item item[], int len4, int BagItemNum)
 {
+	while (1)
+	{
+		cout << "\n\t\t\t      |=商店=|" << endl
+			   << "\t\t\t    |----------|" << endl
+			<<" >>玩家货币数: "<<PlayerData[0].gold <<endl<< endl << endl;
 
+		int p = 0;
+		for (int i = 0; i < len4; i++)
+		{
+			cout << " |物品 " << i + 1 << ": " << item[i].ItemName;
+			cout << "  \t类型: " << ((item[i].ItemType == 0) ? "道具" : "消耗品") << "    "
+				<< "  已有: ";
+			for (int s = 0; s < BagItemNum; s++)
+			{
+				if (PlayerBag[s].BagItem.ItemName == item[i].ItemName)
+				{
+					cout<< PlayerBag[s].BagItem.ItemNum;
+					p = 1;
+				}
+			}
+			if (p == 1)
+			{
+				p = 0;
+			}
+			else
+			{
+				cout << 0;
+			}
+			cout << " \t价格: " << item[i].cost << endl;
+			cout << " |--------------------------------------------------------------------|" << endl
+				<< " |INFO: " << item[i].ItemInfo << endl << endl<<endl;
+		}
+
+		cout << "请选择要购买的物品(单击选择，输入0退出)" << endl;
+		int Select = _getch();
+		Select -= 49;
+
+		if (Select >= 0 && Select <= len4)
+		{
+			cout << "\n购买数量(输入后按下回车):" << endl;
+			int Num = 0;
+			cin >> Num;
+
+			if (Num * item[Select].cost <= PlayerData[0].gold)
+			{
+				PlayerData[0].gold -= Num * item[Select].cost;
+				item[Select].ShowItem = 1;
+				item[Select].ItemNum = Num;
+
+				for (int j = 0; j < len4; j++)
+				{
+					if (item[Select].ItemName == PlayerBag[j].BagItem.ItemName)
+					{
+						PlayerBag[j].BagItem.ItemNum += item[Select].ItemNum;
+						item[Select].ShowItem = 0;
+						item[Select].ItemNum = 0;
+					}
+				}
+
+				BagItemNum = NumOfItem(PlayerBag, item, len4, BagItemNum);
+				CinBagItem(PlayerBag, item, BagItemNum, len4);
+
+				cout << "\n购买了 " << Num << " 个" << item[Select].ItemName << "   花费了: "<< Num * item[Select].cost <<endl<< endl;
+
+				system("pause");
+				system("cls");
+			}
+			else
+			{
+				cout << "货币不够！" << endl;
+				system("pause");
+				system("cls");
+			}
+		}
+		else
+		{
+			return BagItemNum;
+			break;
+		}
+	}
+	return BagItemNum;
 }
 
 int main()
@@ -1597,39 +1973,62 @@ int main()
 	struct Monster MonsterData[] = { {"测试怪物",80,80,1,0,0,10},
 									{"怪物A",10,10,1,0,0,1} }; 
 
-	              //分别为是否显示技能、技能名字、技能伤害计算数值、技能类型、技能CD、CDTime、技能消耗、技能介绍
-	struct SkillList SkillData[] = { {1,"光剑劈砍★☆☆",1,1,0,0,1,"造成基础攻击100%伤害"},
-									 {1,"MK2自卫手枪★☆☆",3,0,3,0,4,"基础攻击力+3"},
-									 {1,"热能爆破★☆☆",2,1,6,1,7,"造成基础攻击200%的伤害"}
+	              //分别为是否显示技能、技能名字、技能伤害计算数值、技能类型、技能CD、CDTime、技能消耗、技能等级、技能升级消耗、技能介绍
+	struct SkillList SkillData[] = { 
+									 {1,"光剑劈砍★☆☆"	,1,   1, 0, 0, 1, 1, 0,"造成基础攻击100%伤害"},
+									 {0,"突进斩击★★☆"	,1.2, 1, 0, 0, 2, 2, 40,"造成基础攻击120%伤害"},
+									 {0,"混沌审判★★★"		,1.5, 1, 0, 0, 3, 3, 70,"造成基础攻击150%伤害"},
+
+									 {1,"MK2自卫手枪★☆☆" ,3  , 0, 3, 0, 4 , 1, 0,"基础攻击力+3"},
+									 {0,"MK4步枪★★☆"		,7  , 0, 4, 0, 8 , 2, 20,"基础攻击力+7"},
+									 {0,"MK6轨道炮★★★"	,12 , 0, 6, 1, 15, 3, 50,"基础攻击力+12"},
+
+									 {1,"热能爆破★☆☆"    ,2  , 1, 6, 1, 7,  1, 0,"造成基础攻击200%的伤害"},
+									 {0,"核心溶解★★☆"    ,2.6, 1, 7, 0, 13,  2, 30,"造成基础攻击260%的伤害"},
+									 {0,"等离子风暴★★★"	,3.5, 1, 8, 0, 20,  3, 60,"造成基础攻击350%的伤害"}
 								    };
 	int len = sizeof SkillData / sizeof SkillData[0];
-	struct SkillUseList SkillUseData[30];
 
-				 //分别为是否显示技能、技能名字、技能伤害计算数值、技能类型、技能CD、CDTime、技能消耗、技能介绍
-	struct SkillList SkillSptData[] = { {1,"紧急包扎★☆☆",3,2,7,4,6,"回复玩家3点生命值"},
-										{1,"招架★☆☆",2,3,4,2,5,"防御，使受到的伤害降低2点"},
-										{1,"分神★☆☆",8,4,8,0,0,"回复玩家8点耐力值"},
-										{1,"眩晕★☆☆",4,5,0,0,6,"造成基础攻击力40%的伤害，50%的概率眩晕敌人"},
+	struct SkillUseList SkillUseData[30];
+	struct SkillUseList SkillLvUp[30];
+
+
+
+				 //分别为是否显示技能、技能名字、技能伤害计算数值、技能类型、技能CD、CDTime、技能消耗、技能等级、技能升级消耗、技能介绍
+	struct SkillList SkillSptData[] = { {1,"紧急包扎★☆☆"		,3 , 2, 7, 4, 6, 1, 0,"回复玩家3点生命值"},
+										{0,"创伤修复★★☆"		,6 , 2, 8, 3, 10, 2, 18,"回复玩家6点生命值"},
+										{0,"医疗机器人★★★"	,10, 2, 8, 2, 15,3, 40,"回复玩家10点生命值"},
+
+										{1,"招架★☆☆"			,2 , 3 ,4, 2, 5, 1, 0,"防御，使受到的伤害降低2点"},
+										{0,"能量盾★★☆"		,5 , 3 ,5, 2, 8, 2, 15,"防御，使受到的伤害降低5点"},
+										{0,"防御立场★★★"		,8 , 3 ,5, 1, 10,3, 30,"防御，使受到的伤害降低8点"},
+
+										{1,"分神★☆☆"				,8 ,4,6 ,3,0,1,0,"回复玩家8点耐力值"},
+										{0,"伺机而动★★☆"			,14,4,8 ,2,0,2,10,"回复玩家14点耐力值"},
+										{0,"运筹帷幄★★★"			,22,4,10,1,0,3,25,"回复玩家22点耐力值"},
+
+										{1,"电击枪★☆☆"			,4,5,5,3,6 ,1,0 ,"造成基础攻击力40%的伤害，50%的概率眩晕敌人"},
+										{0,"闪光弹★★☆"			,6,5,6,2,10,2,20,"造成基础攻击力60%的伤害，60%的概率眩晕敌人"},
+										{0,"能量干扰★★★"			,9,5,6,0,14,3,45,"造成基础攻击力90%的伤害，75%的概率眩晕敌人"},
 									   };
 	int len2 = sizeof SkillSptData / sizeof SkillSptData[0];
 	struct SkillUseList SkillSptUseData[30];
 
 	//是否显示装备、装备名字、是否已装备、装备类型、装备类型名称、装备数值、装备介绍
-	struct Equipment Eq[] = { {1,"剑",0,0,"武器",5,"No Info"},
-							  {1,"安全帽",0,1,"头盔",10,"No Info"},
-							  {1,"防弹衣",0,2,"胸甲",10,"No Info"},
-							  {1,"护腿",0,3,"护腿",10,"No Info"},
-							  {1,"长筒靴子",0,4,"靴子",10,"No Info"},
-							  {1,"应急起搏器",0,5,"护符",0,"No Info"},
-							  {1,"test",0,2,"No Info",0,"No Info"}
+	struct Equipment Eq[] = { {1,"剑",0,0,"武器",5,"攻击力+5"},
+							  {1,"安全帽",0,1,"头盔",10,"最大生命值+4，耐力+10"},
+							  {1,"防弹衣",0,2,"胸甲",10,"最大生命值+10，耐力+10"},
+							  {1,"护腿",0,3,"护腿",10,"最大生命值+6，耐力+10"},
+							  {1,"长筒靴子",0,4,"靴子",10,"最大生命值+4，耐力+10"},
+							  {1,"应急起搏器",0,5,"护符",0,"获得一次重生机会，效果触发后消失"}
 							 };
 	int len3 = sizeof Eq / sizeof Eq[0];
 
 	//是否显示物品、物品名字、物品数量、物品类型、物品数值、物品介绍
-	struct Item item[] = {	{1,"血瓶",3,1,5,"回复5点生命值"},
-							{1,"耐力药水",3,2,6,"回复6点耐力值"},
-							{1,"能量盾",3,3,2,"护盾值+2"},
-							{1,"力量",3,4,2,"下回合额外伤害+2"}
+	struct Item item[] = {	{0,"血瓶",0,1,5,8,"回复5点生命值"},
+							{0,"耐力药水",0,2,6,4,"回复6点耐力值"},
+							{0,"能量盾",0,3,2,6,"护盾值+2"},
+							{0,"力量",0,4,2,6,"下回合额外伤害+2"}
 						 };
 	int len4 = sizeof item / sizeof item[0];
 
@@ -1637,7 +2036,8 @@ int main()
 
 	//初始化玩家数据
 	{
-	PlayerData[0].PlayerExp = 200;
+	PlayerData[0].PlayerExp = 190;
+	PlayerData[0].gold = 80;
 	PlayerData[0].PlayerLv = 1;
 	PlayerData[0].PlayerMaxH = 10;
 	PlayerData[0].PlayerH = 10;
@@ -1650,23 +2050,34 @@ int main()
 	PlayerData[0].ExDamage = 0;
 	PlayerData[0].PlayerDef = 0; 
 	PlayerData[0].IfFirstDead = 0;
+	PlayerData[0].SkillPoint = 150;
 	}
-
-	PlayerLvUp(PlayerData);
-
 
 	//统计物品装备数量
 	int BagEqNum = NumOfEq(PlayerBag, Eq, len3);
-	int BagItemNum = NumOfItem(PlayerBag, item, len4);
+	int BagItemNum = 0;
+	BagItemNum = NumOfItem(PlayerBag, item, len4, BagItemNum);
 
 	//往玩家背包写入物品装备
 	CinBagEq(PlayerBag, Eq,BagEqNum);
-	CinBagItem(PlayerBag, item,BagItemNum);
+	CinBagItem(PlayerBag, item,BagItemNum,len4);
 
-	ShowPlayerData(PlayerData, PlayerBag, Eq, PEq, BagEqNum);
+	CinSkillUse(SkillData, SkillUseData, len);
+	CinSkillSptUse(SkillSptData, SkillSptUseData, len2);
+
+	PlayerLvUp(PlayerData);
+
+	BagItemNum = Shop(PlayerData,PlayerBag, item, len4, BagItemNum);
+
+	ShowPlayerData(PlayerData, PlayerBag, Eq, PEq, SkillData,SkillSptData,SkillUseData, SkillSptUseData,SkillLvUp,len, len2, BagEqNum);
+
+	system("cls");
+	cout << "\n遭遇了怪物！\n\n" << endl;
+	system("pause");
+	system("cls");
 
 	int MonNum = 0;
-	BattleSystem(PlayerData, SkillData, SkillUseData, SkillSptData, SkillSptUseData, MonsterData,
+	BattleSystem(PlayerData, SkillData, SkillUseData, SkillSptData, SkillSptUseData, SkillLvUp, MonsterData,
 		PlayerBag,item,Eq,PEq,MonNum, len ,len2, BagItemNum, BagEqNum);
 
 
